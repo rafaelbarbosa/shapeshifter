@@ -17,34 +17,36 @@ public class ObjectSerializer extends Serializer<Object> {
         builder.append("{");
 
         for(Field field :obj.getClass().getDeclaredFields()){
-            try {
-                boolean accessibleField = true;
-                if(!field.isAccessible()){
-                    accessibleField = false;
-                    field.setAccessible(true);
-                }
-                Object fieldValue = field.get(obj);
-                if(!accessibleField){
-                    field.setAccessible(false);
-                }
-                if(fieldValue != null) {
-                    //for eventual rollback
-                    int currentLength = builder.length();
-                    builder.append("\"");
-                    builder.append(field.getName());
-                    builder.append("\"");
-                    builder.append(":");
-
-                    try {
-                        this.getShapeshifterInstance().toJSON(fieldValue, builder);
-                        builder.append(",");
-                    } catch (PropertyAlreadySerializedException e) {
-                        //rollback on that
-                        builder.delete(currentLength-1,builder.length());
+            if(!Modifier.isTransient(field.getModifiers())){
+                try {
+                    boolean accessibleField = true;
+                    if(!field.isAccessible()){
+                        accessibleField = false;
+                        field.setAccessible(true);
                     }
+                    Object fieldValue = field.get(obj);
+                    if(!accessibleField){
+                        field.setAccessible(false);
+                    }
+                    if(fieldValue != null) {
+                        //for eventual rollback
+                        int currentLength = builder.length();
+                        builder.append("\"");
+                        builder.append(field.getName());
+                        builder.append("\"");
+                        builder.append(":");
+    
+                        try {
+                            this.getShapeshifterInstance().toJSON(fieldValue, builder);
+                            builder.append(",");
+                        } catch (PropertyAlreadySerializedException e) {
+                            //rollback on that
+                            builder.delete(currentLength-1,builder.length());
+                        }
+                    }
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
                 }
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
             }
         }
         if(builder.lastIndexOf(",") == builder.length()-1) {

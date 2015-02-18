@@ -4,6 +4,7 @@ import io.shapeshifter.PropertyAlreadySerializedException;
 import io.shapeshifter.Serializer;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * User: rafael
